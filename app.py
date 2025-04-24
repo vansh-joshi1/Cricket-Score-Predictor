@@ -7,17 +7,34 @@ import base64
 # load the trained model from pickle
 pipe = pickle.load(open('pipe.pkl', 'rb'))
 
-# all the teams in the T20
-teams = ['Australia',
-         'India',
-         'Bangladesh',
-         'New Zealand',
-         'South Africa',
-         'England',
+# Complete list of all teams in T20 International cricket
+teams = ['Afghanistan', 
+         'Australia', 
+         'Bangladesh', 
+         'Botswana',
+         'Canada',
+         'England', 
+         'Hong Kong',
+         'India', 
+         'Ireland',
+         'Kenya',
+         'Malaysia',
+         'Namibia',
+         'Nepal',
+         'Netherlands',
+         'New Zealand', 
+         'Oman',
+         'Pakistan', 
+         'Papua New Guinea',
+         'Scotland',
+         'Singapore',
+         'South Africa', 
+         'Sri Lanka',
+         'Thailand',
+         'United Arab Emirates',
+         'United States',
          'West Indies',
-         'Afghanistan',
-         'Pakistan',
-         'Sri Lanka']
+         'Zimbabwe']
 
 cities = ['Colombo',
           'Mirpur',
@@ -53,7 +70,14 @@ cities = ['Colombo',
           'St Kitts',
           'Cardiff',
           'Christchurch',
-          'Trinidad']
+          'Trinidad',
+          'Guyana',
+          'Sharjah',
+          'Harare',
+          'Belfast',
+          'Edinburgh',
+          'Dublin',
+          'Amstelveen']
 
 # Function to set cricket-themed background
 def set_cricket_background():
@@ -135,6 +159,15 @@ def set_cricket_background():
             -webkit-appearance: none;
             margin: 0;
         }
+        /* Warning message styling */
+        .warning-msg {
+            color: #ff9800 !important;
+            background-color: rgba(255, 152, 0, 0.1) !important;
+            padding: 10px !important;
+            border-radius: 10px !important;
+            margin: 10px 0 !important;
+            border-left: 5px solid #ff9800 !important;
+        }
         </style>
         """,
         unsafe_allow_html=True
@@ -157,8 +190,43 @@ with col1:
 with col2:
     bowlingTeam = st.selectbox('Select bowling team', sorted(teams))
 
+# Warning message if teams are not in the original training set
+original_teams = ['Australia', 'India', 'Bangladesh', 'New Zealand', 'South Africa', 
+                  'England', 'West Indies', 'Afghanistan', 'Pakistan', 'Sri Lanka']
+
+if battingTeam not in original_teams or bowlingTeam not in original_teams:
+    st.markdown(
+        """
+        <div class="warning-msg">
+        <strong>Note:</strong> Some selected teams may not have been in the original training dataset. 
+        Predictions may be less accurate for these teams.
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
+
 # select the city
 city = st.selectbox('Select city', sorted(cities))
+
+# Warning message if city is not in the original training set
+original_cities = ['Colombo', 'Mirpur', 'Johannesburg', 'Dubai', 'Auckland', 'Cape Town', 
+                   'London', 'Pallekele', 'Barbados', 'Sydney', 'Melbourne', 'Durban', 
+                   'St Lucia', 'Wellington', 'Lauderhill', 'Hamilton', 'Centurion', 
+                   'Manchester', 'Abu Dhabi', 'Mumbai', 'Nottingham', 'Southampton', 
+                   'Mount Maunganui', 'Chittagong', 'Kolkata', 'Lahore', 'Delhi', 
+                   'Nagpur', 'Chandigarh', 'Adelaide', 'Bengaluru', 'St Kitts', 
+                   'Cardiff', 'Christchurch', 'Trinidad']
+
+if city not in original_cities:
+    st.markdown(
+        """
+        <div class="warning-msg">
+        <strong>Note:</strong> The selected city may not have been in the original training dataset. 
+        Predictions may be less accurate for this venue.
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 
 # create three columns for score, overs, and wickets input
 col3, col4, col5 = st.columns(3)
@@ -191,8 +259,38 @@ if st.button('Predict Score'):
              'delivery_left': [delivery_left], 'wicketsLeft': [wicketsLeft], 'CurrentRunRate': [CurrentRunRate],
              'Run_In_Last5': [Run_In_Last5]})
         
+        # Handle teams not in original training data
+        if battingTeam not in original_teams:
+            # Use a similar team for prediction (this is a simplification)
+            input_df['battingTeam'] = ['India']  # Default to a major team
+            
+        if bowlingTeam not in original_teams:
+            # Use a similar team for prediction (this is a simplification)
+            input_df['bowlingTeam'] = ['Australia']  # Default to a major team
+            
+        # Handle cities not in original training data
+        if city not in original_cities:
+            # Use a similar city for prediction (this is a simplification)
+            input_df['city'] = ['Dubai']  # Default to a major venue
+        
         result = pipe.predict(input_df)
         st.markdown(f'<p class="stHeader">Predicted Final Score: {int(result[0])}</p>', unsafe_allow_html=True)
+        
+        # Add disclaimer for teams/cities not in original dataset
+        if battingTeam not in original_teams or bowlingTeam not in original_teams or city not in original_cities:
+            st.info("Note: This prediction uses approximations for teams or venues not in the original training dataset.")
+            
     except Exception as e:
         st.error(f"An error occurred: {e}")
         st.info("Please check your inputs and try again.")
+
+# Add footer information
+st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style="text-align: center; color: #aaaaaa; font-size: 0.8rem; margin-top: 50px;">
+    T20 Cricket Score Predictor | Powered by Machine Learning | &copy; 2025
+    </div>
+    """,
+    unsafe_allow_html=True
+)
